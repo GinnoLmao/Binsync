@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"binsync-app","appId":"1:854648011322:android:638c844e871c7c5839d303","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"binsync-app","configurations":{"android":"1:854648011322:android:638c844e871c7c5839d303","ios":"1:854648011322:ios:04c38c6b73afb65339d303"}}}}}}

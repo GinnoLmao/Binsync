@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "854648011322",
+    "project_id": "binsync-app",
+    "storage_bucket": "binsync-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:854648011322:android:638c844e871c7c5839d303",
+        "android_client_info": {
+          "package_name": "com.example.binsync"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7-zJAw9KMAiPPaoF8RsBaEhQF6Re2Tpo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

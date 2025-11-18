@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'dart:async';
+import 'package:binsync/services/firestore_service.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -27,6 +28,7 @@ class _MapScreenState extends State<MapScreen> {
   bool _showDoneButton = false;
   String _locationText = '';
   Timer? _pinLockTimer;
+  final FirestoreService _firestoreService = FirestoreService();
 
   @override
   void initState() {
@@ -175,19 +177,69 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  void _confirmLocation() {
-    setState(() {
-      _isPinning = false;
-      _showDoneButton = false;
-    });
+  Future<void> _confirmLocation() async {
+    // Show loading
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              SizedBox(width: 16),
+              Text('Saving location...'),
+            ],
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
 
-    // Here you can save the location or perform other actions
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Location saved: $_locationText'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    try {
+      // Save to Firestore
+      await _firestoreService.addGarbageReport(
+        latitude: _currentPinLocation.latitude,
+        longitude: _currentPinLocation.longitude,
+        address: _locationText,
+      );
+
+      setState(() {
+        _isPinning = false;
+        _showDoneButton = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 16),
+                Text('Garbage location saved successfully!'),
+              ],
+            ),
+            backgroundColor: const Color(0xFF00A86B),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving location: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   void _cancelPinning() {
