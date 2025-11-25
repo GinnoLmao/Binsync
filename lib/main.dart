@@ -9,6 +9,7 @@ import 'screens/collector_main_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/pickup_schedule_screen.dart';
 import 'screens/user_map_screen.dart';
+import 'screens/history_screen.dart';
 import 'services/auth_service.dart';
 import 'services/fcm_service.dart';
 import 'services/notification_scheduler.dart';
@@ -128,7 +129,7 @@ class _MainScreenState extends State<MainScreen> {
     HomeScreen(),
     UserMapScreen(),
     ReportScreen(),
-    StatsScreen(),
+    HistoryScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -178,9 +179,9 @@ class _MainScreenState extends State<MainScreen> {
               label: 'Report',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart_outlined),
-              activeIcon: Icon(Icons.bar_chart),
-              label: 'Stats',
+              icon: Icon(Icons.history),
+              activeIcon: Icon(Icons.history),
+              label: 'History',
             ),
           ],
         ),
@@ -882,47 +883,6 @@ class HomeScreen extends StatelessWidget {
             },
           ),
         ],
-      ),
-    );
-  }
-}
-
-// Stats Screen
-class StatsScreen extends StatelessWidget {
-  const StatsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.analytics,
-              size: 100,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Statistics',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Statistics functionality coming soon',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
