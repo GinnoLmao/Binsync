@@ -74,7 +74,7 @@ class LocationService {
       _isLoading = false;
       print('Location error: $e');
       // Default to San Francisco
-      _currentLocation = LatLng(37.7749, -122.4194);
+      _currentLocation = const LatLng(37.7749, -122.4194);
       _isInitialized = true;
       return _currentLocation;
     }
@@ -88,6 +88,6 @@ class LocationService {
     if (_currentLocation != null) {
       return _currentLocation!;
     }
-    return LatLng(37.7749, -122.4194); // Default to San Francisco
+    return const LatLng(37.7749, -122.4194); // Default to San Francisco
   }
 }

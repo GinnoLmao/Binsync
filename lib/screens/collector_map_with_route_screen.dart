@@ -198,7 +198,7 @@ class _CollectorMapWithRouteScreenState
     }
 
     // Calculate distance from current location to each garbage
-    final Distance distance = Distance();
+    const Distance distance = Distance();
     double minDistance = double.infinity;
     Map<String, dynamic>? nearest;
 
@@ -225,7 +225,7 @@ class _CollectorMapWithRouteScreenState
   Future<void> _checkAutoStartTracking() async {
     if (!_showStartButton || _initialPosition == null) return;
 
-    final Distance distance = Distance();
+    const Distance distance = Distance();
     final distanceMeters = distance.as(
       LengthUnit.Meter,
       _initialPosition!,

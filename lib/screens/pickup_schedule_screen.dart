@@ -28,7 +28,7 @@ class _PickupScheduleScreenState extends State<PickupScheduleScreen> {
               const Text('Day of the week:'),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: selectedDay,
+                initialValue: selectedDay,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   contentPadding:

@@ -123,7 +123,7 @@ class _CollectorSettingsScreenState extends State<CollectorSettingsScreen> {
       child: SwitchListTile(
         value: value,
         onChanged: onChanged,
-        activeColor: const Color(0xFF00A86B),
+        activeThumbColor: const Color(0xFF00A86B),
         secondary: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(

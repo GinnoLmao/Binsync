@@ -74,7 +74,7 @@ class CollectorTrackingService {
       
       // Calculate distance from last position
       if (lastPosition != null) {
-        final Distance distance = Distance();
+        const Distance distance = Distance();
         final distanceMeters = distance.as(
           LengthUnit.Meter,
           lastPosition!,
@@ -114,7 +114,7 @@ class CollectorTrackingService {
       return;
     }
     
-    final Distance distance = Distance();
+    const Distance distance = Distance();
     final distanceMeters = distance.as(
       LengthUnit.Meter,
       _startPosition!,

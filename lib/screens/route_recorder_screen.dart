@@ -19,7 +19,7 @@ class _RouteRecorderScreenState extends State<RouteRecorderScreen> {
   final TextEditingController _descriptionController = TextEditingController();
 
   LatLng _currentLocation = const LatLng(14.5995, 120.9842);
-  List<LatLng> _recordedPoints = [];
+  final List<LatLng> _recordedPoints = [];
   bool _isRecording = false;
   bool _isLoading = false;
   DateTime? _recordingStartTime;

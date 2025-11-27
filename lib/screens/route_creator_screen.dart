@@ -22,7 +22,7 @@ class _RouteCreatorScreenState extends State<RouteCreatorScreen> {
 
   LatLng _currentLocation = const LatLng(14.5995, 120.9842);
   List<LatLng> _routePoints = [];
-  List<LatLng> _waypoints = []; // User-tapped waypoints
+  final List<LatLng> _waypoints = []; // User-tapped waypoints
   List<LatLng> _snappedRoute = []; // Road-snapped route
   bool _isLoading = false;
   bool _isSnapping = false;

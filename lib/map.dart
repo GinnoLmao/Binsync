@@ -17,8 +17,8 @@ class _MapScreenState extends State<MapScreen> {
   MapController? _mapController;
 
   // Default location (will be updated with user's location)
-  LatLng _initialCenter = LatLng(37.7749, -122.4194); // San Francisco
-  LatLng _currentPinLocation = LatLng(37.7749, -122.4194);
+  LatLng _initialCenter = const LatLng(37.7749, -122.4194); // San Francisco
+  LatLng _currentPinLocation = const LatLng(37.7749, -122.4194);
   final double _initialZoom = 13.0;
   bool _isLoadingLocation = true;
   String? _locationError;
@@ -215,16 +215,16 @@ class _MapScreenState extends State<MapScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
+          const SnackBar(
+            content: Row(
               children: [
                 Icon(Icons.check_circle, color: Colors.white),
                 SizedBox(width: 16),
                 Text('Garbage location saved successfully!'),
               ],
             ),
-            backgroundColor: const Color(0xFF00A86B),
-            duration: const Duration(seconds: 2),
+            backgroundColor: Color(0xFF00A86B),
+            duration: Duration(seconds: 2),
           ),
         );
       }

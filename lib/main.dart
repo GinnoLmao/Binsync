@@ -341,11 +341,11 @@ class HomeScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey[300]!),
       ),
-      child: Row(
+      child: const Row(
         children: [
-          const Icon(Icons.location_on, color: Color(0xFF00A86B), size: 20),
-          const SizedBox(width: 8),
-          const Expanded(
+          Icon(Icons.location_on, color: Color(0xFF00A86B), size: 20),
+          SizedBox(width: 8),
+          Expanded(
             child: Text(
               'City Proper, Iloilo City (Truck ID: 0005)',
               style: TextStyle(
@@ -753,11 +753,11 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.history, color: Color(0xFF00A86B), size: 20),
-              const SizedBox(width: 8),
-              const Text(
+              Icon(Icons.history, color: Color(0xFF00A86B), size: 20),
+              SizedBox(width: 8),
+              Text(
                 'Recent Activity',
                 style: TextStyle(
                   fontSize: 16,

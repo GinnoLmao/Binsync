@@ -445,8 +445,8 @@ class _ReportScreenState extends State<ReportScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: Row(
-          children: const [
+        title: const Row(
+          children: [
             Icon(Icons.location_on, color: Color(0xFF00A86B)),
             SizedBox(width: 8),
             Text('Location Adjusted'),
@@ -522,17 +522,17 @@ class _ReportScreenState extends State<ReportScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.person_pin_circle,
+                Icon(Icons.person_pin_circle,
                     color: Colors.blue, size: 20),
-                const SizedBox(width: 4),
-                const Text('Your location', style: TextStyle(fontSize: 12)),
-                const SizedBox(width: 16),
-                const Icon(Icons.location_on,
+                SizedBox(width: 4),
+                Text('Your location', style: TextStyle(fontSize: 12)),
+                SizedBox(width: 16),
+                Icon(Icons.location_on,
                     color: Color(0xFF00A86B), size: 20),
-                const SizedBox(width: 4),
-                const Text('Adjusted location', style: TextStyle(fontSize: 12)),
+                SizedBox(width: 4),
+                Text('Adjusted location', style: TextStyle(fontSize: 12)),
               ],
             ),
           ],
@@ -597,8 +597,8 @@ class _ReportScreenState extends State<ReportScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
-          children: const [
+        title: const Row(
+          children: [
             Icon(Icons.warning_amber_rounded, color: Colors.orange),
             SizedBox(width: 8),
             Text('Not Near Collection Route'),
@@ -642,8 +642,8 @@ class _ReportScreenState extends State<ReportScreen> {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00A86B),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF00A86B),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -736,8 +736,8 @@ class _ReportScreenState extends State<ReportScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF00A86B),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF00A86B),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -889,8 +889,9 @@ class _ReportScreenState extends State<ReportScreen> {
                           final aTimestamp = aData['timestamp'] as Timestamp?;
                           final bTimestamp = bData['timestamp'] as Timestamp?;
 
-                          if (aTimestamp == null && bTimestamp == null)
+                          if (aTimestamp == null && bTimestamp == null) {
                             return 0;
+                          }
                           if (aTimestamp == null) return 1;
                           if (bTimestamp == null) return -1;
 

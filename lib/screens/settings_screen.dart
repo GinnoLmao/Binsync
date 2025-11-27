@@ -132,7 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Switch(
               value: _notificationsEnabled,
               onChanged: _saveNotificationSetting,
-              activeColor: const Color(0xFF00A86B),
+              activeThumbColor: const Color(0xFF00A86B),
             ),
           ),
           const Divider(),
@@ -163,7 +163,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   );
                 }
               },
-              activeColor: const Color(0xFF00A86B),
+              activeThumbColor: const Color(0xFF00A86B),
             ),
           ),
           const Divider(),
@@ -174,7 +174,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Switch(
               value: _darkModeEnabled,
               onChanged: _saveDarkModeSetting,
-              activeColor: const Color(0xFF00A86B),
+              activeThumbColor: const Color(0xFF00A86B),
             ),
           ),
         ],
