@@ -15,6 +15,60 @@ class RouteListScreen extends StatefulWidget {
 
 class _RouteListScreenState extends State<RouteListScreen> {
   final RouteService _routeService = RouteService();
+  Set<String> _pinnedRoutes = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPinnedRoutes();
+  }
+
+  Future<void> _loadPinnedRoutes() async {
+    final userId = await _routeService.getCurrentUserId();
+    if (userId != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('user_preferences')
+          .doc(userId)
+          .get();
+      if (doc.exists) {
+        final data = doc.data();
+        setState(() {
+          _pinnedRoutes = Set<String>.from(data?['pinnedRoutes'] ?? []);
+        });
+      }
+    }
+  }
+
+  Future<void> _togglePin(String routeId) async {
+    if (_pinnedRoutes.contains(routeId)) {
+      setState(() {
+        _pinnedRoutes.remove(routeId);
+      });
+    } else {
+      if (_pinnedRoutes.length >= 3) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You can only pin up to 3 routes'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+      setState(() {
+        _pinnedRoutes.add(routeId);
+      });
+    }
+
+    final userId = await _routeService.getCurrentUserId();
+    if (userId != null) {
+      await FirebaseFirestore.instance
+          .collection('user_preferences')
+          .doc(userId)
+          .set({
+        'pinnedRoutes': _pinnedRoutes.toList(),
+      }, SetOptions(merge: true));
+    }
+  }
 
   void _showRouteOptions() {
     showModalBottomSheet(
@@ -235,7 +289,7 @@ class _RouteListScreenState extends State<RouteListScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        centerTitle: true,
+        centerTitle: false,
         automaticallyImplyLeading: false,
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -253,20 +307,39 @@ class _RouteListScreenState extends State<RouteListScreen> {
 
           final routes = snapshot.data?.docs ?? [];
 
-          // Sort routes in memory by lastUsed (most recent first)
-          final sortedRoutes = List.from(routes);
-          sortedRoutes.sort((a, b) {
+          // Separate pinned and unpinned routes
+          final pinnedRoutesList =
+              routes.where((doc) => _pinnedRoutes.contains(doc.id)).toList();
+          final unpinnedRoutesList =
+              routes.where((doc) => !_pinnedRoutes.contains(doc.id)).toList();
+
+          // Sort both lists alphabetically by route name
+          pinnedRoutesList.sort((a, b) {
             final aData = a.data() as Map<String, dynamic>;
             final bData = b.data() as Map<String, dynamic>;
-            final aLastUsed = aData['lastUsed'] as Timestamp?;
-            final bLastUsed = bData['lastUsed'] as Timestamp?;
-            
-            if (aLastUsed == null && bLastUsed == null) return 0;
-            if (aLastUsed == null) return 1;
-            if (bLastUsed == null) return -1;
-            
-            return bLastUsed.compareTo(aLastUsed);
+            final aName = (aData['routeName'] ?? 'Unnamed Route')
+                .toString()
+                .toLowerCase();
+            final bName = (bData['routeName'] ?? 'Unnamed Route')
+                .toString()
+                .toLowerCase();
+            return aName.compareTo(bName);
           });
+
+          unpinnedRoutesList.sort((a, b) {
+            final aData = a.data() as Map<String, dynamic>;
+            final bData = b.data() as Map<String, dynamic>;
+            final aName = (aData['routeName'] ?? 'Unnamed Route')
+                .toString()
+                .toLowerCase();
+            final bName = (bData['routeName'] ?? 'Unnamed Route')
+                .toString()
+                .toLowerCase();
+            return aName.compareTo(bName);
+          });
+
+          // Combine: pinned routes first, then unpinned
+          final sortedRoutes = [...pinnedRoutesList, ...unpinnedRoutesList];
 
           if (sortedRoutes.isEmpty) {
             return Center(
@@ -330,6 +403,7 @@ class _RouteListScreenState extends State<RouteListScreen> {
                     final description = routeData['description'] ?? '';
                     final routePoints = routeData['routePoints'] as List? ?? [];
                     final lastUsed = routeData['lastUsed'] as Timestamp?;
+                    final isPinned = _pinnedRoutes.contains(doc.id);
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
@@ -344,17 +418,39 @@ class _RouteListScreenState extends State<RouteListScreen> {
                           padding: const EdgeInsets.all(16),
                           child: Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF00A86B).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Icon(
-                                  Icons.route,
-                                  color: Color(0xFF00A86B),
-                                  size: 28,
-                                ),
+                              Stack(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF00A86B)
+                                          .withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.route,
+                                      color: Color(0xFF00A86B),
+                                      size: 28,
+                                    ),
+                                  ),
+                                  if (isPinned)
+                                    Positioned(
+                                      top: 0,
+                                      right: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(3),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.amber,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.push_pin,
+                                          size: 12,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -402,9 +498,26 @@ class _RouteListScreenState extends State<RouteListScreen> {
                                 onSelected: (value) {
                                   if (value == 'delete') {
                                     _deleteRoute(doc.id, routeName);
+                                  } else if (value == 'pin') {
+                                    _togglePin(doc.id);
                                   }
                                 },
                                 itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    value: 'pin',
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          isPinned
+                                              ? Icons.push_pin_outlined
+                                              : Icons.push_pin,
+                                          color: Colors.amber,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(isPinned ? 'Unpin' : 'Pin to top'),
+                                      ],
+                                    ),
+                                  ),
                                   const PopupMenuItem(
                                     value: 'delete',
                                     child: Row(

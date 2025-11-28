@@ -400,16 +400,18 @@ class _CollectorMapScreenState extends State<CollectorMapScreen> {
                   // Garbage markers (rotate: false to prevent rotation with map)
                   ..._garbageLocations.map((location) {
                     return Marker(
-                      width: 40.0,
-                      height: 40.0,
+                      width: 50.0,
+                      height: 50.0,
                       point: LatLng(location['lat'], location['lng']),
                       rotate: false, // Keep pins upright
+                      alignment: const Alignment(
+                          0.15, -0.85), // Offset for pin tip position
                       child: GestureDetector(
                         onTap: () => _showLocationDetails(location),
-                        child: const Icon(
-                          Icons.delete,
-                          color: Colors.red,
-                          size: 40,
+                        child: Image.asset(
+                          'assets/images/garbage_pin.png',
+                          width: 50,
+                          height: 50,
                         ),
                       ),
                     );

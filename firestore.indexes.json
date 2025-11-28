@@ -1,0 +1,87 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "garbage_reports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "reportedBy", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "garbage_reports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "user_notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "user_notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "isRead", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "collector_sessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "collectorId", "order": "ASCENDING" },
+        { "fieldPath": "startTime", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "collector_sessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "collectorId", "order": "ASCENDING" },
+        { "fieldPath": "startTime", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "daily_stats_backup",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "collectorId", "order": "ASCENDING" },
+        { "fieldPath": "dateTimestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "daily_stats_backup",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "collectorId", "order": "ASCENDING" },
+        { "fieldPath": "dateTimestamp", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "garbage_reports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "reportedBy", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "garbage_reports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "collectorId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "collectedAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

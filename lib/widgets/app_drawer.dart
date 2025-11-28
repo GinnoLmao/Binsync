@@ -122,7 +122,7 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // Avatar
                       Container(

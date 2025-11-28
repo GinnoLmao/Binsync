@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow authenticated users to read/write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Garbage reports - users can create, collectors can update
+    match /garbage_reports/{reportId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null && 
+        (request.auth.uid == resource.data.reportedBy || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'collector');
+    }
+    
+    // Collector routes - collectors only
+    match /collector_routes/{routeId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'collector';
+    }
+    
+    // Daily route progress - collectors only
+    match /daily_route_progress/{progressId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'collector';
+    }
+    
+    // Collector sessions - collectors can write, users can read their route's collector
+    match /collector_sessions/{sessionId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'collector';
+    }
+    
+    // Daily stats backup - collectors only
+    match /daily_stats_backup/{statId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'collector';
+    }
+    
+    // Active collectors - public read, collectors write
+    match /active_collectors/{collectorId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == collectorId;
+    }
+    
+    // User notifications - users can only access their own
+    match /user_notifications/{notificationId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+    
+    // Pickup schedules
+    match /pickup_schedules/{scheduleId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Tracking sessions - collectors only
+    match /tracking_sessions/{sessionId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'collector';
+    }
+  }
+}

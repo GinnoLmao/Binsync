@@ -80,6 +80,10 @@ class _CollectorMainScreenState extends State<CollectorMainScreen>
         setState(() {
           _selectedIndex = 2;
         });
+      }, onNavigateToStats: () {
+        setState(() {
+          _selectedIndex = 3;
+        });
       }),
       const CollectorTrashListScreen(),
       _activeRouteId != null &&

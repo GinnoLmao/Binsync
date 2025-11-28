@@ -42,7 +42,9 @@ class AuthService {
           .get();
 
       if (userDoc.exists) {
-        String userType = userDoc.get('userType');
+        // Safely get userType with fallback
+        final data = userDoc.data() as Map<String, dynamic>?;
+        String userType = data?['userType'] ?? 'user';
         await saveUserType(userType);
       }
 
@@ -133,6 +135,8 @@ class AuthService {
         'firstName': firstName,
         'lastName': lastName,
         'middleName': middleName ?? '',
+        'fullName': firstName, // Default username is first name
+        'name': firstName, // Also set name field for compatibility
         'dateOfBirth': dateOfBirth,
         'phoneNumber': phoneNumber,
         'email': email,
@@ -156,6 +160,24 @@ class AuthService {
     await _auth.signOut();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('userType');
+  }
+
+  // Delete account
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      final userId = user.uid;
+
+      // Delete Firestore data first
+      await _firestore.collection('users').doc(userId).delete();
+
+      // Delete Firebase Auth account
+      await user.delete();
+
+      // Clear preferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('userType');
+    }
   }
 
   // Handle authentication exceptions

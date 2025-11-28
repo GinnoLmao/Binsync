@@ -218,61 +218,6 @@ class HomeScreen extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        actions: [
-          // Notification bell with badge
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('notifications')
-                .where('userId', isEqualTo: user?.uid)
-                .where('read', isEqualTo: false)
-                .snapshots(),
-            builder: (context, snapshot) {
-              final unreadCount = snapshot.data?.docs.length ?? 0;
-
-              return Stack(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications_outlined,
-                        color: Colors.white),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NotificationsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  if (unreadCount > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          unreadCount > 9 ? '9+' : unreadCount.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -737,6 +682,10 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildRecentActivity(String? userId) {
+    if (userId == null) {
+      return const SizedBox();
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -769,8 +718,8 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 16),
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
-                .collection('garbage_reports')
-                .where('reportedBy', isEqualTo: userId)
+                .collection('user_notifications')
+                .where('userId', isEqualTo: userId)
                 .orderBy('timestamp', descending: true)
                 .limit(10)
                 .snapshots(),
@@ -787,41 +736,76 @@ class HomeScreen extends StatelessWidget {
                 );
               }
 
-              final activities = snapshot.data!.docs;
+              final notifications = snapshot.data!.docs;
 
               return ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: activities.length,
+                itemCount: notifications.length,
                 separatorBuilder: (context, index) => const Divider(height: 24),
                 itemBuilder: (context, index) {
-                  final activity =
-                      activities[index].data() as Map<String, dynamic>;
-                  final status = activity['status'] as String;
-                  final timestamp = activity['timestamp'] as Timestamp?;
+                  final notification =
+                      notifications[index].data() as Map<String, dynamic>;
+                  final type = notification['type'] as String;
+                  final timestamp = notification['timestamp'] as Timestamp?;
                   final date = timestamp?.toDate();
+                  final message = notification['message'] as String? ?? '';
 
-                  final isPickup = status == 'collected';
-                  final icon = isPickup ? Icons.check_circle : Icons.delete;
-                  final color =
-                      isPickup ? const Color(0xFF00A86B) : Colors.orange;
-                  final bgColor = isPickup
-                      ? const Color(0xFF00A86B).withOpacity(0.1)
-                      : Colors.orange.withOpacity(0.1);
-                  final title = isPickup ? 'Trash Pick-up' : 'Trash Threw';
-                  final badge = isPickup ? '+1 Pick-up' : '+1 Trash';
-                  final badgeColor =
-                      isPickup ? const Color(0xFF00A86B) : Colors.orange;
+                  IconData icon;
+                  Color color;
+                  String title;
+
+                  switch (type) {
+                    case 'pickup_scheduled':
+                      icon = Icons.calendar_today;
+                      color = Colors.blue;
+                      title = 'Pickup Scheduled';
+                      break;
+                    case 'collector_nearby':
+                      icon = Icons.location_on;
+                      color = Colors.orange;
+                      title = 'Collector Nearby';
+                      break;
+                    case 'bin_collected':
+                      icon = Icons.check_circle;
+                      color = const Color(0xFF00A86B);
+                      title = 'Bin Collected';
+                      break;
+                    case 'bin_missed':
+                      icon = Icons.warning;
+                      color = Colors.red;
+                      title = 'Bin Missed';
+                      break;
+                    case 'collector_passed':
+                      icon = Icons.directions_walk;
+                      color = Colors.grey;
+                      title = 'Collector Passed';
+                      break;
+                    case 'garbage_added':
+                      icon = Icons.add_circle;
+                      color = Colors.purple;
+                      title = 'Garbage Added';
+                      break;
+                    case 'session_finished':
+                      icon = Icons.flag;
+                      color = Colors.green;
+                      title = 'Collection Finished';
+                      break;
+                    default:
+                      icon = Icons.info;
+                      color = Colors.grey;
+                      title = 'Notification';
+                  }
 
                   return Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: bgColor,
-                          borderRadius: BorderRadius.circular(8),
+                          color: color.withOpacity(0.1),
+                          shape: BoxShape.circle,
                         ),
-                        child: Icon(icon, color: color, size: 24),
+                        child: Icon(icon, color: color, size: 20),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -831,50 +815,28 @@ class HomeScreen extends StatelessWidget {
                             Text(
                               title,
                               style: const TextStyle(
+                                fontWeight: FontWeight.w600,
                                 fontSize: 14,
-                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            if (date != null)
+                            if (message.isNotEmpty)
                               Text(
-                                '${date.month}/${date.day}/${date.year}',
+                                message,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],
                                 ),
                               ),
+                            if (date != null)
+                              Text(
+                                _formatTimestamp(date),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey[500],
+                                ),
+                              ),
                           ],
                         ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          if (date != null)
-                            Text(
-                              '${date.hour}:${date.minute.toString().padLeft(2, '0')} ${date.hour >= 12 ? 'PM' : 'AM'}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: badgeColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              badge,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: badgeColor,
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   );
@@ -885,5 +847,22 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatTimestamp(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inHours < 1) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inDays < 1) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      return '${date.month}/${date.day}/${date.year}';
+    }
   }
 }

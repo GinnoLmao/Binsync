@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/auth_service.dart';
 
 class CollectorProfileScreen extends StatefulWidget {
   const CollectorProfileScreen({super.key});
@@ -84,27 +85,24 @@ class _CollectorProfileScreenState extends State<CollectorProfileScreen> {
     );
 
     if (confirmed == true && mounted) {
-      setState(() => _isLoading = true);
+      final authService = AuthService();
 
       try {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
-          // Delete user data from Firestore
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .delete();
+        await authService.deleteAccount();
 
-          // Delete the auth account
-          await user.delete();
-
-          if (mounted) {
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          }
+        if (mounted) {
+          // Show success message after navigation
+          Future.delayed(const Duration(milliseconds: 300), () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Account successfully deleted'),
+                backgroundColor: Color(0xFF00A86B),
+              ),
+            );
+          });
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error deleting account: $e'),
@@ -149,7 +147,8 @@ class _CollectorProfileScreenState extends State<CollectorProfileScreen> {
                 final userData = snapshot.data?.data() as Map<String, dynamic>?;
                 final username = userData?['fullName'] ?? 'User';
                 final email = user?.email ?? 'No email';
-                final phone = userData?['phoneNumber'] ?? 'Not provided';
+                final phone =
+                    userData?['phoneNumber']?.toString() ?? 'Not provided';
 
                 if (!_isEditingUsername) {
                   _usernameController.text = username;

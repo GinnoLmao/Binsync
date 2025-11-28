@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:latlong2/latlong.dart';
+import 'collector_map_with_route_screen.dart';
 
 class CollectorTrashListScreen extends StatefulWidget {
   const CollectorTrashListScreen({super.key});
@@ -290,7 +291,13 @@ class _CollectorTrashListScreenState extends State<CollectorTrashListScreen> {
                         itemCount: garbageList.length,
                         itemBuilder: (context, index) {
                           final garbage = garbageList[index];
-                          return _buildTrashCard(garbage, index);
+                          return _buildTrashCard(
+                            garbage,
+                            index,
+                            activeRouteDoc.id,
+                            routeData['routeName'] ?? 'Route',
+                            routePoints,
+                          );
                         },
                       ),
                     );
@@ -301,7 +308,13 @@ class _CollectorTrashListScreenState extends State<CollectorTrashListScreen> {
     );
   }
 
-  Widget _buildTrashCard(Map<String, dynamic> garbage, int index) {
+  Widget _buildTrashCard(
+    Map<String, dynamic> garbage,
+    int index,
+    String routeId,
+    String routeName,
+    List<LatLng> routePoints,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -318,7 +331,18 @@ class _CollectorTrashListScreenState extends State<CollectorTrashListScreen> {
       ),
       child: InkWell(
         onTap: () {
-          // Could navigate to detail view or map
+          // Navigate to Collector Map and highlight this bin
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CollectorMapWithRouteScreen(
+                routeId: routeId,
+                routeName: routeName,
+                routePoints: routePoints,
+                showBackButton: true,
+              ),
+            ),
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(

@@ -74,11 +74,8 @@ class _ReportScreenState extends State<ReportScreen> {
 
   Future<void> _getCurrentLocation() async {
     try {
+      // Location permission already handled in user_map_screen
       LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         setState(() {
@@ -122,14 +119,6 @@ class _ReportScreenState extends State<ReportScreen> {
           _locationText =
               '${place.street ?? ''}, ${place.locality ?? ''}, ${place.subAdministrativeArea ?? ''}';
         });
-
-        // Show visual confirmation if location was snapped
-        if (_wasSnapped && mounted) {
-          _showLocationSnapDialog();
-        } else if (!snappedToRoute && mounted) {
-          // Warn user if not near any collector route
-          _showNotNearRouteWarning();
-        }
       }
     } catch (e) {
       setState(() {
