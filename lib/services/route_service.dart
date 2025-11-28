@@ -291,4 +291,10 @@ class RouteService {
       throw Exception('Failed to save recorded session: $e');
     }
   }
+
+  // Get current user ID
+  Future<String?> getCurrentUserId() async {
+    final user = FirebaseAuth.instance.currentUser;
+    return user?.uid;
+  }
 }

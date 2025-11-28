@@ -4,8 +4,49 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../widgets/app_drawer.dart';
 
-class HistoryScreen extends StatelessWidget {
+class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
+
+  @override
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<HistoryScreen> {
+  String _selectedFilter = 'all'; // all, week, month, 3months
+
+  DateTime? get _filterStartDate {
+    final now = DateTime.now();
+    switch (_selectedFilter) {
+      case 'week':
+        return now.subtract(const Duration(days: 7));
+      case 'month':
+        return now.subtract(const Duration(days: 30));
+      case '3months':
+        return now.subtract(const Duration(days: 90));
+      default:
+        return null; // All time
+    }
+  }
+
+  Stream<QuerySnapshot> _getFilteredStream(String userId) {
+    final startDate = _filterStartDate;
+
+    if (startDate == null) {
+      // All time
+      return FirebaseFirestore.instance
+          .collection('garbage_reports')
+          .where('reportedBy', isEqualTo: userId)
+          .snapshots();
+    } else {
+      // Filtered by date
+      return FirebaseFirestore.instance
+          .collection('garbage_reports')
+          .where('reportedBy', isEqualTo: userId)
+          .where('timestamp',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+          .snapshots();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,18 +75,57 @@ class HistoryScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Header
+          // Header with Date Filter
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             color: Colors.white,
-            child: const Text(
-              'Trash History',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Trash History',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00A86B).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFF00A86B)),
+                  ),
+                  child: DropdownButton<String>(
+                    value: _selectedFilter,
+                    underline: const SizedBox(),
+                    icon: const Icon(Icons.arrow_drop_down,
+                        color: Color(0xFF00A86B)),
+                    style: const TextStyle(
+                      color: Color(0xFF00A86B),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'all', child: Text('All Time')),
+                      DropdownMenuItem(
+                          value: 'week', child: Text('Last 7 Days')),
+                      DropdownMenuItem(
+                          value: 'month', child: Text('Last 30 Days')),
+                      DropdownMenuItem(
+                          value: '3months', child: Text('Last 3 Months')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _selectedFilter = value);
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -59,10 +139,7 @@ class HistoryScreen extends StatelessWidget {
                     ),
                   )
                 : StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('garbage_reports')
-                        .where('reportedBy', isEqualTo: user.uid)
-                        .snapshots(),
+                    stream: _getFilteredStream(user.uid),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(

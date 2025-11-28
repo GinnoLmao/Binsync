@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:latlong2/latlong.dart';
+import 'dart:async';
 import '../services/auth_service.dart';
 import '../services/route_service.dart';
 import '../services/collector_tracking_service.dart';
+import '../services/collector_session_service.dart';
 import 'collector_map_with_route_screen.dart';
+import 'collector_stats_screen.dart';
 import 'collector_settings_screen.dart';
 import 'collector_profile_screen.dart';
 import 'collector_report_bug_screen.dart';
@@ -16,8 +19,10 @@ import 'route_recorder_screen.dart';
 
 class CollectorHomeScreen extends StatefulWidget {
   final VoidCallback? onNavigateToMap;
+  final VoidCallback? onNavigateToStats;
 
-  const CollectorHomeScreen({super.key, this.onNavigateToMap});
+  const CollectorHomeScreen(
+      {super.key, this.onNavigateToMap, this.onNavigateToStats});
 
   @override
   State<CollectorHomeScreen> createState() => _CollectorHomeScreenState();
@@ -26,10 +31,12 @@ class CollectorHomeScreen extends StatefulWidget {
 class _CollectorHomeScreenState extends State<CollectorHomeScreen> {
   final RouteService _routeService = RouteService();
   final CollectorTrackingService _trackingService = CollectorTrackingService();
+  final CollectorSessionService _sessionService = CollectorSessionService();
   String? _activeRouteId;
   String? _activeRouteName;
   List<LatLng>? _activeRoutePoints;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  Timer? _refreshTimer;
 
   // Tracking data
   double _todayDistance = 0.0;
@@ -43,6 +50,13 @@ class _CollectorHomeScreenState extends State<CollectorHomeScreen> {
   void initState() {
     super.initState();
     _loadActiveRoute(); // This will call _loadTodayData() after route is loaded
+
+    // Start timer to refresh UI every second if session is active
+    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted && _sessionService.isSessionActive) {
+        setState(() {});
+      }
+    });
 
     // Listen for tracking updates
     _trackingService.onUpdate = (distance, duration) {
@@ -79,43 +93,6 @@ class _CollectorHomeScreenState extends State<CollectorHomeScreen> {
     if (userId != null &&
         _activeRouteId != null &&
         _activeRoutePoints != null) {
-      // Get all pending garbage
-      final allBins = await FirebaseFirestore.instance
-          .collection('garbage_reports')
-          .where('status', isEqualTo: 'pending')
-          .get();
-
-      List<String> routeGarbageIds = [];
-
-      // Filter bins near route
-      for (var doc in allBins.docs) {
-        final data = doc.data();
-        final garbageLat = data['latitude'] as double?;
-        final garbageLng = data['longitude'] as double?;
-
-        if (garbageLat == null || garbageLng == null) continue;
-
-        final garbagePoint = LatLng(garbageLat, garbageLng);
-
-        // Check if garbage is within 20m of any route segment
-        bool isNearRoute = false;
-        for (int i = 0; i < _activeRoutePoints!.length - 1; i++) {
-          final segmentStart = _activeRoutePoints![i];
-          final segmentEnd = _activeRoutePoints![i + 1];
-          final distance =
-              _distanceToLineSegment(garbagePoint, segmentStart, segmentEnd);
-
-          if (distance <= 20) {
-            isNearRoute = true;
-            break;
-          }
-        }
-
-        if (isNearRoute) {
-          routeGarbageIds.add(doc.id);
-        }
-      }
-
       // Get progress document to see how many were collected
       final progressDocId = _getProgressDocId(_activeRouteId!);
       final progressDoc = await FirebaseFirestore.instance
@@ -128,30 +105,48 @@ class _CollectorHomeScreenState extends State<CollectorHomeScreen> {
         final collectedBins =
             List<String>.from(progressData['collectedBins'] ?? []);
         collected = collectedBins.length;
-        // Total = pending bins + collected bins today
-        total = routeGarbageIds.length + collected;
       } else {
         collected = 0;
-        total = routeGarbageIds.length;
+      }
 
-        // Create progress document if there are bins
-        if (total > 0) {
-          await FirebaseFirestore.instance
-              .collection('daily_route_progress')
-              .doc(progressDocId)
-              .set({
-            'collectorId': userId,
-            'routeId': _activeRouteId!,
-            'routeName': _activeRouteName ?? '',
-            'date': _getTodayDateString(),
-            'collectedBins': [],
-            'totalBins': total,
-            'completionRate': 0.0,
-            'status': 'in_progress',
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+      // Get current pending garbage count (same logic as trash list)
+      final allBins = await FirebaseFirestore.instance
+          .collection('garbage_reports')
+          .where('status', isEqualTo: 'pending')
+          .get();
+
+      int pendingCount = 0;
+      for (var doc in allBins.docs) {
+        final data = doc.data();
+        final garbageLat = data['latitude'] as double?;
+        final garbageLng = data['longitude'] as double?;
+
+        if (garbageLat == null || garbageLng == null) continue;
+
+        final garbagePoint = LatLng(garbageLat, garbageLng);
+        bool isNearRoute = false;
+
+        // Check if garbage is within 50m of any route segment
+        for (int i = 0; i < _activeRoutePoints!.length - 1; i++) {
+          final distance = _distanceToLineSegment(
+            garbagePoint,
+            _activeRoutePoints![i],
+            _activeRoutePoints![i + 1],
+          );
+
+          if (distance <= 50) {
+            isNearRoute = true;
+            break;
+          }
+        }
+
+        if (isNearRoute) {
+          pendingCount++;
         }
       }
+
+      // Total = pending bins + collected bins today
+      total = pendingCount + collected;
     }
 
     // Calculate completion rate
@@ -242,6 +237,7 @@ class _CollectorHomeScreenState extends State<CollectorHomeScreen> {
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _trackingService.dispose();
     super.dispose();
   }
@@ -388,14 +384,14 @@ class _CollectorHomeScreenState extends State<CollectorHomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Statistics Cards
+                      // Statistics Cards - Direct from Session Service
                       Row(
                         children: [
                           Expanded(
                             child: _buildStatCard(
                               Icons.straighten,
                               'Distance',
-                              '${(_todayDistance / 1000).toStringAsFixed(1)}km',
+                              '${(_sessionService.totalDistance / 1000).toStringAsFixed(1)}km',
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -403,7 +399,7 @@ class _CollectorHomeScreenState extends State<CollectorHomeScreen> {
                             child: _buildStatCard(
                               Icons.access_time,
                               'Hours',
-                              _formatDuration(_todayDuration),
+                              _formatDuration(_sessionService.sessionDuration),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -411,7 +407,7 @@ class _CollectorHomeScreenState extends State<CollectorHomeScreen> {
                             child: _buildStatCard(
                               Icons.trending_up,
                               'Efficiency',
-                              '${_efficiency.toInt()}%',
+                              '${_calculateEfficiency()}%',
                             ),
                           ),
                         ],
@@ -581,9 +577,9 @@ class _CollectorHomeScreenState extends State<CollectorHomeScreen> {
                                 return _buildNoGarbageCard();
                               }
 
-                              // Show first 4 items
-                              final displayCount = routeGarbage.length > 4
-                                  ? 4
+                              // Show first 3 items
+                              final displayCount = routeGarbage.length > 3
+                                  ? 3
                                   : routeGarbage.length;
 
                               return Column(
@@ -595,14 +591,35 @@ class _CollectorHomeScreenState extends State<CollectorHomeScreen> {
                                     itemCount: displayCount,
                                     itemBuilder: (context, index) {
                                       final garbage = routeGarbage[index];
-                                      return _buildTrashItem(
-                                          garbage, routePoints);
+                                      return InkWell(
+                                        onTap: () {
+                                          // Navigate to Collector Map with this bin
+                                          if (_activeRoutePoints != null) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    CollectorMapWithRouteScreen(
+                                                  routeId: _activeRouteId!,
+                                                  routeName: _activeRouteName ??
+                                                      'Route',
+                                                  routePoints:
+                                                      _activeRoutePoints!,
+                                                  showBackButton: true,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        },
+                                        child: _buildTrashItem(
+                                            garbage, routePoints),
+                                      );
                                     },
                                   ),
-                                  if (routeGarbage.length > 4)
+                                  if (routeGarbage.length > 3)
                                     TextButton(
                                       onPressed: () {
-                                        // Show more or navigate to map
+                                        // Navigate to Collector Trash List to see all
                                         if (_activeRoutePoints != null) {
                                           Navigator.push(
                                             context,
@@ -656,11 +673,9 @@ class _CollectorHomeScreenState extends State<CollectorHomeScreen> {
                         color: Colors.white,
                         textColor: Colors.black87,
                         onTap: () {
-                          // TODO: Navigate to performance screen
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Performance view coming soon')),
-                          );
+                          if (widget.onNavigateToStats != null) {
+                            widget.onNavigateToStats!();
+                          }
                         },
                       ),
 
@@ -920,6 +935,35 @@ class _CollectorHomeScreenState extends State<CollectorHomeScreen> {
       return '$hours.${(minutes / 60 * 10).toInt()}hrs';
     }
     return '${minutes}mins';
+  }
+
+  int _calculateEfficiency() {
+    final duration = _sessionService.sessionDuration;
+    final distance = _sessionService.totalDistance;
+    final hours = duration.inSeconds / 3600.0;
+    final km = distance / 1000.0;
+
+    if (_sessionService.binsCollected > 0 && hours > 0 && km > 0) {
+      final binsPerHour = _sessionService.binsCollected / hours;
+      final binsPerKm = _sessionService.binsCollected / km;
+      final e1 = binsPerHour / 10.0;
+      final e2 = binsPerKm / 5.0;
+      return (((e1 + e2) / 2.0 * 100).clamp(0.0, 100.0)).toInt();
+    }
+    return 0;
+  }
+
+  Stream<DocumentSnapshot> _getTodayTrackingStream() {
+    final user = FirebaseAuth.instance.currentUser;
+    final today = DateTime.now();
+    final dateStr =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final docId = '${user?.uid}_$dateStr';
+
+    return FirebaseFirestore.instance
+        .collection('tracking_sessions')
+        .doc(docId)
+        .snapshots();
   }
 
   Widget _buildDrawer(
