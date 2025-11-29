@@ -151,7 +151,7 @@ class AboutUsScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _buildDeveloperCard(
               'Ginno Arostique',
-              'Developer',
+              'Project Manager',
               Icons.developer_mode,
             ),
 
