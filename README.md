@@ -1,112 +1,77 @@
-# BinSync
+<div align="center">
 
-> A Resident–Collector Coordination and Notification System for Improved Waste Collection System
+# ♻️ BinSync
 
-BinSync is a mobile application developed to support real-time residential waste-collection coordination through interactive mapping, bin-readiness reporting, and simplified route visualization. Built using the Flutter framework and integrated with OpenStreetMap, BinSync enables users to mark garbage bin locations, view collection areas, and interact with location-based features designed to make waste collection more timely, transparent, and efficient.
+**Resident–collector coordination · Maps · Routes · Notifications**
 
-This project was developed as an academic requirement for the course **CC206 – App Development and Emerging Technologies** under the **Bachelor of Science in Computer Science, 3B-AI**, West Visayas State University.
+![Flutter](https://img.shields.io/badge/Flutter-Mobile-02569B?logo=flutter&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28?logo=firebase&logoColor=black)
+![Dart](https://img.shields.io/badge/Dart-3%2B-0175C2?logo=dart&logoColor=white)
+![Status](https://img.shields.io/badge/status-academic%20prototype-64748B)
 
----
+</div>
 
 ## Overview
 
-BinSync introduces a lightweight, map-driven approach to waste-collection coordination by allowing users to plot bin locations and interact with real-time map elements. Through a tap-to-mark interface, both residents and collectors can engage with bin data directly on an interactive OpenStreetMap surface. The system showcases how mobile technologies and geospatial mapping can help optimize collection visibility and support location-aware decision-making in communities.
+BinSync is a Flutter mobile application exploring how residents and waste collectors can coordinate collection activity with interactive maps, route tooling, location-aware screens, and notifications. It was developed as academic coursework at **West Visayas State University**.
 
-The application's design emphasizes simplicity and practicality. Features such as adding markers, zoom controls, predefined sample bins, and reset functions allow users to intuitively explore and manage bin placements. Although this version of BinSync focuses primarily on demonstrating mapping and marker functionalities, it establishes the foundational components for more advanced waste-collection systems—such as real-time bin readiness, collection tracking, and route-based optimization.
+The source includes more than the map demonstration described by the original README: it has separate resident and collector screens, Firebase-backed services, schedules, reports, and route-related components. The repository is an academic prototype; production deployment or real-world collection outcomes have not been independently verified.
 
----
+## Feature tour
 
-## Features
+| Area | Implemented modules visible in this repository |
+| --- | --- |
+| Accounts and roles | Firebase Authentication, Firestore user records, resident and collector entry screens |
+| Maps and location | OpenStreetMap via `flutter_map`, geolocation, map markers and collector map views |
+| Collector workflows | Collector dashboard, route creation/recording/list screens, collection lists and statistics views |
+| Resident workflows | Reporting, collection schedules, history, notifications and map views |
+| Messaging | Firebase Cloud Messaging integration, local notification modules and notification scheduling |
+| Routing | Route service, collector tracking and route-snapping service modules |
 
-- 🗺️ **Interactive Map Interface** integrating OpenStreetMap tiles
-- 📍 **Add and modify garbage bin markers** directly on the map
-- 🎯 **Pre-loaded sample bin locations** for testing and demonstration
-- ➕ **Tap-to-Add Marker** capability
-- 🔍 **Zoom in/out controls** for enhanced map navigation
-- 📌 **Reset View** to return to the default location
-- 🧹 **Clear all markers** to reset the map
+> **Scope note:** A screen or service in the source is not a claim of deployment, end-to-end acceptance testing, or guaranteed live location updates.
 
----
+## Technology
 
-## Prerequisites
+- **Mobile:** Flutter, Dart, Material Design
+- **Maps:** `flutter_map`, `latlong2`, `geolocator`, `geocoding`
+- **Backend services:** Firebase Core, Authentication, Cloud Firestore, Cloud Messaging
+- **Notifications and device access:** `flutter_local_notifications`, `permission_handler`, `flutter_foreground_task`
+- **Networking:** `http` and map/routing-related APIs
 
-Before running BinSync, ensure you have the following installed:
+## Project structure
 
-- **Flutter SDK** (3.0.0 or higher)
-- **Dart** (3.0.0 or higher)
-- A compatible IDE such as **Visual Studio Code** or **Android Studio**
-
----
-
-## Getting Started
-
-### Clone the Repository
-
-```bash
-git clone https://github.com/DukeZyke/Binsync.git
-cd Binsync
+```text
+lib/
+├── main.dart                   # App bootstrap, Firebase init, role-based entry
+├── map.dart                    # Map-based prototype views
+├── screens/                    # Resident and collector interface screens
+├── services/                   # Auth, location, routing, tracking, notifications
+├── widgets/                    # Reusable UI
+└── firebase_options.dart       # App-level Firebase configuration
+android/ · ios/ · assets/       # Flutter platform and image assets
 ```
 
-### Install Dependencies
+## Run locally
 
-```bash
-flutter pub get
-```
+1. Install a Flutter SDK compatible with the Dart constraint in `pubspec.yaml`.
+2. Clone this repository:
+   ```bash
+   git clone https://github.com/GinnoLmao/Binsync.git
+   cd Binsync
+   flutter pub get
+   ```
+3. Configure a **Firebase project you own** and register the Android/iOS app. Review `lib/firebase_options.dart` and the Firebase rules/configuration before running against any live data.
+4. Launch on a compatible device or emulator:
+   ```bash
+   flutter run
+   ```
 
-### Run the Application
+Map tiles, geolocation permissions, notifications, and Firebase-backed workflows require their corresponding services and device permissions. Some features may need additional platform configuration.
 
-```bash
-flutter run
-```
+## Contributors
 
----
+This was an academic collaboration. The original project documentation credits **Zuriel Eliazar Calix** with lead application development and **Ginno D. Arostique Jr.** with project management, feature planning, UI/UX direction and documentation. Preserve contributor attribution when reusing the project.
 
-## Project Structure
+## Responsible use
 
-```
-Binsync/
-├── lib/
-│   └── main.dart             # Core map implementation and UI
-├── pubspec.yaml              # Project dependencies and Flutter settings
-├── analysis_options.yaml     # Linting and code analysis rules
-└── README.md                 # Project documentation
-```
-
----
-
-## Dependencies
-
-- **flutter_map** – Map rendering and tile loading
-- **latlong2** – Geolocation and coordinate utilities
-- **cupertino_icons** – UI icon support
-
----
-
-## Usage Summary
-
-1. **Tap on the map** to add new bin markers
-2. **Use zoom buttons** for map navigation
-3. **Reset the map view** with the location button
-4. **Clear all markers** to restore initial sample data
-
-The system includes sample bin markers for demonstration, allowing users to immediately explore the interactive map environment.
-
----
-
-## About the Developers
-
-This project was created by students of the **Bachelor of Science in Computer Science – 3B AI**, West Visayas State University, as a final project for the course **CC206 – App Development and Emerging Technologies**.
-
-### Zuriel Eliazar Calix – Lead Developer
-Responsible for core application logic, Flutter integration, and mapping functionality.
-
-### Ginno Arostique Jr. – Project Manager
-Oversaw documentation, feature planning, UI/UX desgin, system structuring, and project direction.
-
-Together, the developers designed BinSync as an academic prototype demonstrating the potential of mobile geospatial technologies in enhancing waste-collection workflows.
-
----
-
-## License
-
-This project is part of an academic requirement and is intended for educational purposes.
+Do not commit Firebase service-account credentials, private location histories, real user records, access tokens, or production configuration secrets. Review Firestore security rules before connecting real accounts. No live municipal or commercial deployment is claimed here.
